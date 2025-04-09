@@ -1,3 +1,13 @@
+.idea/
+cmake-build-debug/
+cmake-build-release/
+
+# Ignore everything under resources/
+resources/*
+
+# Do not ignore test.pts under resources/
+!resources/test.pts
+
 # Prerequisites
 *.d
 
