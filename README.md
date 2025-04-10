@@ -98,11 +98,13 @@ The application features a simple ImGui-based menu that allows you to:
 The repository does not include any point cloud files.
 The only file included is the `test.pts` with 3 points colored red, green, and blue.
 
-The `test.pts` is loaded by default when the program starts.
+The `test.pts` is loaded by default when the program starts with no command line arguments.
 
 To load your own point cloud file, you can either:
-- Load it through the menu.
+- Place it under the `resources/` folder and load it through the menu.
 - Supply the file name as a command line argument when running the program.
+  
+  *(e.g., `./PointCloudRenderer resources/test.pts`)* 
 
 When loading through the menu, the program lists all `.pts` and `.ply` files in the `resources/` directory of the build directory.
 
