@@ -55,6 +55,7 @@ This project uses CMake and FetchContent to automatically download external depe
 - Preferably windows. Linux should work too, but I have not tested it.
   - *There are no specific Windows APIs being used.*
   - *I tried to make sure the `CMakeLists.txt` allows for cross-platform compilation.*
+  - *All dependencies should be cross-platform compatible.*
 
 ### Steps
 1. Configure the project:
@@ -91,6 +92,62 @@ The application features a simple ImGui-based menu that allows you to:
 - Load a point cloud file.
 - Adjust the point size and camera speed via sliders.
 - Reset variables (point size, camera speed) to their default values.
+
+## Point-Cloud Files
+
+The repository does not include any point cloud files.
+The only file included is the `test.pts` with 3 points colored red, green, and blue.
+
+The `test.pts` is loaded by default when the program starts.
+
+To load your own point cloud file, you can either:
+- Load it through the menu.
+- Supply the file name as a command line argument when running the program.
+
+When loading through the menu, the program lists all `.pts` and `.ply` files in the `resources/` directory of the build directory.
+
+You can place your own point cloud files in the `resources/` directory of the repository, the `cmake` build will automatically copy them to the build output directory.
+
+The expected format for the `.pts` file is:
+```plaintext
+// Comments before the number of points are ignored, afterwards they cause errors
+<Number of points>
+<Points in format: X Y Z Rf Gf Bf Nx Ny Nz>
+```
+- `X`, `Y`, `Z`: 3D coordinates of the point.
+- `Rf`, `Gf`, `Bf`: RGB color values (0-255).
+- `Nx`, `Ny`, `Nz`: Normal vector components.j
+- The first line of the file can contain comments, which are ignored until the first number.
+- The first number indicates the number of points in the file.
+- The rest of the lines contain the point data.
+- For an example, see the [`test.pts`](resources/test.pts) file in the [`resources/`](resources/) directory.
+
+The expected format for the `.ply` file is:
+```plaintext
+ply
+format binary_little_endian 1.0
+element vertex <number of vertices>  
+property float x
+property float y
+property float z
+property float nx
+property float ny
+property float nz
+property uchar red
+property uchar green
+property uchar blue
+property uchar class
+end_header
+<binary data>
+```
+- `x`, `y`, `z`: 3D coordinates of the point.
+- `nx`, `ny`, `nz`: Normal vector components.
+- `red`, `green`, `blue`: RGB color values (0-255).
+- `class`: Class label (not used in this project).
+- Binary data follows the header, containing the point data in the specified order.
+- The number of vertices is specified in the header.
+- The binary data is read in chunks corresponding to the number of vertices.
+- For more information, see [PLY file format](https://en.wikipedia.org/wiki/PLY_(file_format)).
 
 ## Discussion
 
