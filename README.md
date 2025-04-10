@@ -190,7 +190,6 @@ and I used ImGui to create an on-screen menu where you can change things like po
 - **Rendering the Scene:**  
   The scene is drawn using shaders.
   One shader is dedicated to drawing the points of the cloud, and another one is for drawing markers showing the light's position and direction.
-  This separation makes it easier to manage and later improve the visuals.
 
 - **Loading Data:**  
   The `PointRenderer` class (in `point_renderer.cpp` and `point_renderer.hpp`) is responsible for loading point cloud data from files.
@@ -198,7 +197,10 @@ and I used ImGui to create an on-screen menu where you can change things like po
 
 - **Camera and User Controls:**  
   The `Camera` class (in `camera.cpp` and `camera.hpp`) handles view transformations so you can move around the scene using keyboard and mouse controls.
+  **This camera class was taken from the LearnOpenGL book/repository and was only integrated into this project.**
+   
   The `Menu` class (in `menu.cpp` and `menu.hpp`) uses ImGui to show a simple user interface, which makes adjusting settings really interactive.
+  The menu also handles the user inputs since I did not want to build an additional class for that.
 
 ### 2.2. Libraries
 
