@@ -16,7 +16,13 @@ extern bool firstMouse;
 namespace fs = std::filesystem;
 
 Menu::Menu()
-    : pointSize(5.0f), openFileDialog(false),
+    : pointSize(5.0f),
+      lightColor(glm::vec3(1.0f, 1.0f, 1.0f)), // white light
+      lightPos(glm::vec3(10.0f, 10.0f, 10.0f)), // light position in world space
+      lightDir(glm::vec3(0.0f, -1.0f, 0.0f)), // light direction (default downward)
+      lightingEnabled(true), // lighting enabled by default
+      lightingFollow(true), // light follows camera by default
+      openFileDialog(false),
       useFpsAverage(true), fpsHistoryMax(60) // average over last 60 frames
 {
 }
@@ -27,9 +33,9 @@ Menu::~Menu()
 
 void Menu::render(GLFWwindow *window, Camera &camera, PointRenderer &renderer, float deltaTime)
 {
-    // Force menu window to appear at (10,10) with fixed size (300x400)
+    // Force menu window to appear at (10,10) with fixed size (300x500)
     ImGui::SetNextWindowPos(ImVec2(10, 10), ImGuiCond_Always);
-    ImGui::SetNextWindowSize(ImVec2(300, 400), ImGuiCond_Always);
+    ImGui::SetNextWindowSize(ImVec2(350, 470), ImGuiCond_Always);
     ImGui::Begin("Menu");
 
     // Lock mouse button: When clicked, fix the mouse cursor to the camera.
@@ -73,6 +79,38 @@ void Menu::render(GLFWwindow *window, Camera &camera, PointRenderer &renderer, f
 
     // Camera speed slider.
     ImGui::SliderFloat("Camera Speed", &camera.MovementSpeed, 1.0f, 25.0f, "%.1f");
+
+    ImGui::Separator();
+    ImGui::Text("Lighting Controls");
+
+    if (lightingFollow)
+    {
+        // If the light follows the camera, set its position to the camera's position.
+        lightPos = camera.Position;
+    }
+
+    // Light Position Input
+    float lightPosArray[3] = { lightPos.x, lightPos.y, lightPos.z };
+    if (ImGui::InputFloat3("Light Position", lightPosArray, "%.1f"))
+    {
+        lightPos = glm::vec3(lightPosArray[0], lightPosArray[1], lightPosArray[2]);
+    }
+
+    // Light Color Picker
+    float lightColorArray[3] = { lightColor.r, lightColor.g, lightColor.b };
+    if (ImGui::ColorEdit3("Light Color", lightColorArray))
+    {
+        lightColor = glm::vec3(lightColorArray[0], lightColorArray[1], lightColorArray[2]);
+    }
+
+    // Light direction input
+    float lightDirArray[3] = { lightDir.x, lightDir.y, lightDir.z };
+    if (ImGui::InputFloat3("Light Direction", lightDirArray))
+        lightDir = glm::vec3(lightDirArray[0], lightDirArray[1], lightDirArray[2]);
+    // Enable/Disable Lighting checkbox.
+    ImGui::Checkbox("Enable Lighting", &lightingEnabled);
+    // Follow camera checkbox.
+    ImGui::Checkbox("Follow Camera", &lightingFollow);
 
     // Load file button.
     if (ImGui::Button("Load File"))

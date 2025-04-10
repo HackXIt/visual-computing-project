@@ -89,6 +89,8 @@ int main(int argc, char* argv[])
 
     // Create the shader for point cloud rendering
     Shader pointShader("shaders/point_cloud.vs", "shaders/point_cloud.fs");
+    // Create the shader for marker rendering
+    Shader markerShader("shaders/marker.vs", "shaders/marker.fs");
 
     std::string pointCloudFilePath = "resources/test.pts";
     // Check arguments if any
@@ -145,46 +147,94 @@ int main(int argc, char* argv[])
     // Main render loop
     while (!glfwWindowShouldClose(window))
     {
-        // Per-frame time logic
-        auto currentFrame = static_cast<float>(glfwGetTime());
+        // Calculate deltaTime for FPS calculations.
+        float currentFrame = static_cast<float>(glfwGetTime());
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
 
-        // Process input events
+        // Process input (this includes menu.processInput which also handles camera updates, etc.)
         menu.processInput(window, camera, deltaTime);
 
-        // Start the ImGui frame.
+        // Start a new ImGui frame.
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
 
-        // Render the menu.
+        // Render the menu. (Pass the window pointer so the menu can lock/unlock the mouse.)
         menu.render(window, camera, renderer, deltaTime);
 
-        // Clear and render scene...
+        // Clear the screen.
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // Set up transformation matrices
-        glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), static_cast<float>(SCR_WIDTH)/static_cast<float>(SCR_HEIGHT), 0.1f, 100.0f);
+        // Setup transformation matrices.
+        glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom),
+                                                static_cast<float>(SCR_WIDTH) / SCR_HEIGHT,
+                                                0.1f, 100.0f);
         glm::mat4 view = camera.GetViewMatrix();
-        auto model = glm::mat4(1.0f);
+        glm::mat4 model = glm::mat4(1.0f); // Identity
 
-        // Activate shader and set uniforms
+        // --- Render the main point cloud ---
         pointShader.use();
         pointShader.setMat4("projection", projection);
         pointShader.setMat4("view", view);
         pointShader.setMat4("model", model);
-        pointShader.setFloat("pointSize", menu.getPointSize());  // Increase point size for better visibility
-
-        // Render the point cloud
+        pointShader.setFloat("pointSize", menu.getPointSize());
+        // Set lighting uniforms: pass the values from the menu.
+        pointShader.setBool("useLighting", menu.getLightingEnabled());
+        glm::vec3 offset = glm::vec3(0.0f, 0.0f, -1.0f); // or any small offset in view direction
+        pointShader.setVec3("lightPos", menu.getLightingFollow() ? camera.Position + offset : menu.getLightPos());
+        pointShader.setVec3("viewPos", camera.Position);
+        pointShader.setVec3("lightColor", menu.getLightColor());
         renderer.render();
 
-        // Render ImGui on top.
+        // --- Render light markers using a marker shader ---
+        markerShader.use();
+        markerShader.setMat4("view", view);
+        markerShader.setMat4("projection", projection);
+        markerShader.setMat4("model", glm::mat4(1.0f)); // identity
+
+        // 1. Render the light position marker (10.0 point size)
+        glPointSize(10.0f);
+        glm::vec3 lightMarker = menu.getLightingFollow() ? camera.Position : menu.getLightPos();
+        markerShader.setVec3("markerColor", menu.getLightColor());
+        {
+            unsigned int markerVAO, markerVBO;
+            glGenVertexArrays(1, &markerVAO);
+            glGenBuffers(1, &markerVBO);
+            glBindVertexArray(markerVAO);
+            glBindBuffer(GL_ARRAY_BUFFER, markerVBO);
+            glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3), &lightMarker, GL_STATIC_DRAW);
+            glEnableVertexAttribArray(0);
+            glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void*)0);
+            glDrawArrays(GL_POINTS, 0, 1);
+            glDeleteBuffers(1, &markerVBO);
+            glDeleteVertexArrays(1, &markerVAO);
+        }
+
+        // 2. Render the light direction marker (1.0 point size)
+        glm::vec3 lightDirNormalized = glm::normalize(menu.getLightDir());
+        glm::vec3 dirMarker = menu.getLightPos() + lightDirNormalized * 1.0f;
+        markerShader.setVec3("markerColor", menu.getLightColor());
+        glPointSize(1.0f);
+        {
+            unsigned int markerVAO, markerVBO;
+            glGenVertexArrays(1, &markerVAO);
+            glGenBuffers(1, &markerVBO);
+            glBindVertexArray(markerVAO);
+            glBindBuffer(GL_ARRAY_BUFFER, markerVBO);
+            glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3), &dirMarker, GL_STATIC_DRAW);
+            glEnableVertexAttribArray(0);
+            glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void*)0);
+            glDrawArrays(GL_POINTS, 0, 1);
+            glDeleteBuffers(1, &markerVBO);
+            glDeleteVertexArrays(1, &markerVAO);
+        }
+
+        // Render the ImGui interface on top.
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
-        // Swap buffers and poll events
         glfwSwapBuffers(window);
         glfwPollEvents();
     }

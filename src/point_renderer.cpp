@@ -37,6 +37,9 @@ void PointRenderer::render() const {
 }
 
 void PointRenderer::setupBuffers() {
+    if (VAO) glDeleteVertexArrays(1, &VAO);
+    if (VBO) glDeleteBuffers(1, &VBO);
+
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
 
@@ -45,16 +48,21 @@ void PointRenderer::setupBuffers() {
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, points.size() * sizeof(Point), points.data(), GL_STATIC_DRAW);
 
-    // position attribute (location 0)
+    // Position attribute (location 0)
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Point), (void*)offsetof(Point, position));
 
-    // color attribute (location 1)
+    // Color attribute (location 1)
     glEnableVertexAttribArray(1);
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Point), (void*)offsetof(Point, color));
 
+    // Normal attribute (location 2)
+    glEnableVertexAttribArray(2);
+    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(Point), (void*)offsetof(Point, normal));
+
     glBindVertexArray(0);
 }
+
 
 bool PointRenderer::loadPointCloud()
 {
