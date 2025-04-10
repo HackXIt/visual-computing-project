@@ -11,6 +11,10 @@ It reads a `.pts` or `.ply` file containing 3D positions, RGB colors, and normal
 - Camera controls (W/A/S/D and mouse for view) allow navigation through the scene.
 - Additionally, the camera speed can be adjusted with the UP/DOWN arrow keys.
 
+The application also features a simplistic light source, which can be moved around with the camera.
+- The renderer uses shaders to apply per-point colors and lighting effects.
+- The light source can be toggled on/off and its position, color, and direction can be adjusted through the menu.
+
 ## Project Structure
 
 ```plaintext
@@ -27,6 +31,8 @@ It reads a `.pts` or `.ply` file containing 3D positions, RGB colors, and normal
 ├── resources/
 │   └── ... various point cloud files to load...
 ├── shaders/
+│   ├── marker.fs
+│   ├── marker.vs
 │   ├── point_cloud.vs
 │   └── point_cloud.fs
 └── src/
@@ -91,6 +97,9 @@ The application features a simple ImGui-based menu that allows you to:
 - Help text for controls.
 - Load a point cloud file.
 - Adjust the point size and camera speed via sliders.
+- Adjust light-source position, color and direction
+- Enable/Disable lighting
+- Enable/Disable light-source following camera
 - Reset variables (point size, camera speed) to their default values.
 
 ## Point-Cloud Files
@@ -151,7 +160,13 @@ end_header
 - The binary data is read in chunks corresponding to the number of vertices.
 - For more information, see [PLY file format](https://en.wikipedia.org/wiki/PLY_(file_format)).
 
-## Discussion
+----
+
+_This part of the README is intended for the grading part of my project submission in the course._
+
+----
+
+# Technical Analysis of Implementation
 
 The project renders a point cloud by:
 
@@ -159,3 +174,4 @@ The project renders a point cloud by:
 - Setting up a VAO/VBO for the point data.
 - Using a shader program to transform vertices and apply per-point colors.
 - Creating round point sprites in the fragment shader using gl_PointCoord.
+
